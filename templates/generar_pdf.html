@@ -125,7 +125,17 @@
             {% for asistencia in asistencias %}
             <tr>
                 <td style="padding-top: 2px; font-size: 11px; width: 25%; text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                    {{ asistencia.fecha|date:"D d/m/Y" }}
+                    {% with asistencia.fecha|date:"D" as dia %}
+                        {% if dia == "Mon" %} Lun
+                        {% elif dia == "Tue" %} Mar
+                        {% elif dia == "Wed" %} Mie
+                        {% elif dia == "Thu" %} Jue
+                        {% elif dia == "Fri" %} Vie
+                        {% elif dia == "Sat" %} Sab
+                        {% elif dia == "Sun" %} Dom
+                        {% endif %}
+                    {% endwith %}
+                    {{ asistencia.fecha|date:"d/m/Y" }}
                 </td>
                 <td style="font-size: 11px; text-align: left; text-indent: 10px; padding-top: 3px; width: 40%; max-width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
                     {{ asistencia.marcaciones }}
@@ -136,6 +146,8 @@
             </tr>
             {% endfor %}
         </tbody>
+        
+        
     </table><br />
 
     <div class="footer">

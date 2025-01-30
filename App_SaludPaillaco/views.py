@@ -333,12 +333,16 @@ def cargar_excel(request):
 import locale
 from datetime import datetime
 from django.http import HttpResponse
-from xhtml2pdf import pisa
 from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from .models import Asistencia
 
 def generar_pdf(request):
-    # Establecer el idioma en español (español de Chile en este caso)
-    locale.setlocale(locale.LC_TIME, 'es_CL.UTF-8')
+    # Forzar el idioma español (puede que algunos sistemas no lo soporten bien)
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        pass  # Si falla, ignoramos el error
 
     # Obtener todos los registros de asistencia
     asistencias = Asistencia.objects.all()
@@ -347,10 +351,15 @@ def generar_pdf(request):
     fecha_actual = datetime.now().strftime('%d/%m/%Y')
     hora_emision = datetime.now().strftime('%H:%M:%S')
 
-    # Crear un diccionario para almacenar los registros por funcionario
+    # Diccionario de días de la semana sin tildes
+    dias_semana = {
+        'mon': 'Lun', 'tue': 'Mar', 'wed': 'Mie',
+        'thu': 'Jue', 'fri': 'Vie', 'sat': 'Sab', 'sun': 'Dom'
+    }
+
+    # Agrupar las asistencias por funcionario
     funcionarios = {}
 
-    # Agrupar las asistencias por RUT (funcionario)
     for asistencia in asistencias:
         if asistencia.rut not in funcionarios:
             funcionarios[asistencia.rut] = {
@@ -359,28 +368,35 @@ def generar_pdf(request):
                 'departamento': asistencia.dpto,
                 'asistencias': []
             }
+
+        # Normalizar el día de la semana a minúsculas y quitar el punto si existe
+        dia_abreviado = asistencia.fecha.strftime('%a').lower().replace('.', '')
+
+        # Asignar el día en español sin tildes
+        asistencia.dia_semana = dias_semana.get(dia_abreviado, asistencia.fecha.strftime('%a'))  # Si no encuentra, usa el original
+
         funcionarios[asistencia.rut]['asistencias'].append(asistencia)
 
-    # Crear PDFs individuales para cada funcionario
+    # Generar PDFs individuales para cada funcionario
     for rut, datos_funcionario in funcionarios.items():
         registros = datos_funcionario['asistencias']
         
-        # Filtrar registros duplicados por fecha (eliminamos entradas con la misma fecha)
+        # Filtrar registros duplicados por fecha
         registros_unicos = []
         fechas_vistas = set()
         for asistencia in registros:
             if asistencia.fecha not in fechas_vistas:
                 registros_unicos.append(asistencia)
                 fechas_vistas.add(asistencia.fecha)
-        
-        # Obtener el mes y año de los registros del funcionario (asumimos que todos los registros son del mismo mes/año)
+
+        # Obtener el mes y año de los registros del funcionario
         if registros_unicos:
             mes = registros_unicos[0].mes
             ano = registros_unicos[0].ano
         else:
-            mes = ano = None  # En caso de no tener registros únicos, evitamos error
+            mes = ano = None
 
-        # Crear el contenido HTML para el PDF usando una plantilla HTML
+        # Renderizar el HTML con los datos
         html_content = render_to_string('generar_pdf.html', {
             'asistencias': registros_unicos,
             'fecha_actual': fecha_actual,
@@ -392,19 +408,18 @@ def generar_pdf(request):
             'departamento_funcionario': datos_funcionario['departamento'],
         })
 
-        # Crear una respuesta HTTP con el tipo de contenido "application/pdf"
+        # Crear la respuesta HTTP con el PDF
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="asistencia_{rut}.pdf"'
 
-        # Convertir el HTML a PDF usando xhtml2pdf
+        # Convertir HTML a PDF
         pisa_status = pisa.CreatePDF(html_content, dest=response)
 
-        # Si ocurre un error al generar el PDF, mostrarlo
         if pisa_status.err:
             return HttpResponse('Error al generar el PDF', status=500)
 
-        # Devolver el PDF generado como respuesta
         return response
+
 
 
 
