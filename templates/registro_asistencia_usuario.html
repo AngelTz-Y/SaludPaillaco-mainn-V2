@@ -1,0 +1,139 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleccionar Año y Mes</title>
+    <!-- Vincula Bootstrap desde el CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEJwM7F7C3aLXl+SHN3OMtHzFS8x9FwOjpKDl/pV7V5lp1Q/0HZpKl2X2Ezdy" crossorigin="anonymous">
+    <!-- Vincula Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9fafb;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #4A5568;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #718096;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .btn-custom {
+            background-color: #38A169;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+
+        .btn-custom:hover {
+            background-color: #2F855A;
+        }
+
+        select {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 style="font-weight: bold;">Seleccionar Año y Mes</h1>
+        <p>Por favor, selecciona un año y un mes para consultar tu registro de asistencia.</p>
+
+        <!-- Formulario para seleccionar año y mes -->
+        <form method="GET" action="{% url 'descargar_pdf_perfil' %}">
+            <!-- Selección del Año -->
+            <div class="mb-4">
+                <label for="año" class="form-label">Año:</label>
+                <select id="año" name="año" class="form-control">
+                    <option value="2024" {% if request.GET.año == '2024' %}selected{% endif %}>2024</option>
+                    <option value="2025" {% if request.GET.año == '2025' %}selected{% endif %}>2025</option>
+                    <option value="2026" {% if request.GET.año == '2026' %}selected{% endif %}>2026</option>
+                </select>
+            </div>
+
+            <!-- Selección del Mes -->
+            <div class="mb-4">
+                <label for="mes" class="form-label">Mes:</label>
+                <select id="mes" name="mes" class="form-control">
+                    <option value="enero" {% if request.GET.mes == 'enero' %}selected{% endif %}>Enero</option>
+                    <option value="febrero" {% if request.GET.mes == 'febrero' %}selected{% endif %}>Febrero</option>
+                    <option value="marzo" {% if request.GET.mes == 'marzo' %}selected{% endif %}>Marzo</option>
+                    <option value="abril" {% if request.GET.mes == 'abril' %}selected{% endif %}>Abril</option>
+                    <option value="mayo" {% if request.GET.mes == 'mayo' %}selected{% endif %}>Mayo</option>
+                    <option value="junio" {% if request.GET.mes == 'junio' %}selected{% endif %}>Junio</option>
+                    <option value="julio" {% if request.GET.mes == 'julio' %}selected{% endif %}>Julio</option>
+                    <option value="agosto" {% if request.GET.mes == 'agosto' %}selected{% endif %}>Agosto</option>
+                    <option value="septiembre" {% if request.GET.mes == 'septiembre' %}selected{% endif %}>Septiembre</option>
+                    <option value="octubre" {% if request.GET.mes == 'octubre' %}selected{% endif %}>Octubre</option>
+                    <option value="noviembre" {% if request.GET.mes == 'noviembre' %}selected{% endif %}>Noviembre</option>
+                    <option value="diciembre" {% if request.GET.mes == 'diciembre' %}selected{% endif %}>Diciembre</option>
+                </select>
+            </div>
+
+            <!-- Botón para Enviar -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-custom">Ver/Descargar PDF</button>
+            </div>
+        </form>
+
+        <br>
+        <br>
+
+        <!-- Mostrar mensajes de error -->
+        {% if error_message %}
+        <div id="error-message" class="alert alert-danger text-center" role="alert">
+            {{ error_message }}
+        </div>
+        <script>
+            setTimeout(function() {
+                var errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.style.display = 'none';
+                }
+            }, 3000);  // Desaparece el mensaje después de 3 segundos
+        </script>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka6v2Jw+5cEVyPy8rT58tIu4jEv0gshtgtlVpP5N8zwSSd5YlYT/Te8S51P8R1Zp" crossorigin="anonymous"></script>
+</body>
+
+</html>

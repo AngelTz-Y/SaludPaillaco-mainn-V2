@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntraNet SaludPaillaco</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'style/estilo.css' %}">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Hacer que el contenedor ocupe todo el ancho y alto en dispositivos móviles */
+        .container-fluid {
+            padding: 0; /* Elimina el padding de los bordes */
+            margin: 0;  /* Elimina márgenes adicionales */
+            height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+    
+        /* Asegurarse de que el contenido esté centrado tanto vertical como horizontalmente */
+        .row {
+            height: 100%; /* Asegura que la fila ocupe todo el alto de la pantalla */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        .col-12 {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+    
+        /* Estilo de la tarjeta */
+        .card {
+            border-radius: 15px; /* Bordes redondeados */
+            min-height: 320px; /* Altura mínima para la tarjeta */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+        }
+    
+        /* Estilo del logo */
+        .logo-animation {
+            transition: transform 0.3s ease-in-out;
+        }
+    
+        .logo-animation:hover {
+            transform: scale(1.1); /* Aumenta el tamaño del logo */
+        }
+    
+        /* Estilo de los enlaces */
+        .large-link {
+            font-size: 1.2rem; /* Aumenta el tamaño de la fuente */
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+    
+        .large-link:hover {
+            transform: scale(1.1);
+            color: #007bff;
+        }
+    
+        /* Estilo de los botones */
+        .hover-btn {
+            transition: transform 0.2s ease, background-color 0.3s ease;
+        }
+    
+        .hover-btn:hover {
+            transform: scale(1.05);
+            background-color: #0056b3;
+        }
+    
+        /* Asegura que las imágenes no se distorsionen */
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+        }
+    
+        /* Personalización de los campos de texto */
+        .input-group-text {
+            background-color: #f0f0f0;
+        }
+    
+        /* Ajustes de los márgenes y paddings */
+        .card-body {
+            padding: 20px;
+        }
+    
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding: 0; /* Asegura que no haya espacio extra en móviles */
+            }
+    
+            .col-12 {
+                padding: 0 15px; /* Añade un margen de 15px en los laterales para evitar que se corte el borde */
+            }
+            
+            .col-sm-8, .col-md-6, .col-lg-4 {
+                max-width: 100%; /* Evita que el formulario se corte a la izquierda */
+            }
+        }
+    </style>
+
+
+</head>
+
+<body class="h-full" style="overflow: hidden;"> <!-- Desactivamos el scroll con overflow: hidden; -->
+
+    <br>
+    <br>
+
+    <br>
+
+    
+    <!-- Formulario Iniciar Sesión con fondo gris oscuro y bordes sombreados -->
+    <div class="container-fluid p-0 mt-4" style="height: 100vh; display: flex; justify-content: flex-start; align-items: flex-start;">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4" style="margin-top: -100px; margin-left: 4px; margin-right: 10px;"> <!-- Ajuste de márgenes para dispositivos pequeños -->
+            <div class="card p-4 shadow-lg border border-secondary rounded-lg" style="background-color: #fcf6f6;">
+                <div class="d-flex justify-content-center mb-4 mt-10">
+                    <!-- Imagen del CESFAM con bordes mejorados, tamaño ajustado y animación -->
+                    <img src="{% static 'img/logo3d.png' %}" style="width: 150px;" alt="CESFAM Logo" class="img-fluid rounded-circle border-4 border-black border-indigo-300 shadow-lg logo-animation">
+                    
+                </div>
+
+                <h2 class="text-center text-dark mb-3" style="text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 25px rgba(0, 0, 0, 0.399), 0 0 50px rgb(0, 0, 255);">
+                    Bienvenido al Intranet SaludPaillaco
+                </h2>
+
+                <br>
+                <br>
+    
+                <h3 class="h5 text-dark mb-4">Iniciar Sesión</h3>
+    
+                <form method="POST">
+                    {% csrf_token %}
+    
+                    <!-- Campo RUT -->
+                    <div class="mb-3">
+                        <label for="rut" class="form-label">RUT:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                            <input type="text" id="rut" name="rut" class="form-control" placeholder="Ingrese su RUT" required>
+                        </div>
+                    </div>
+    
+                    <!-- Campo Contraseña -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required>
+                        </div>
+                    </div>
+    
+                    <!-- Botón Iniciar Sesión con sombra y hover -->
+                    <button type="submit" class="btn btn-primary w-100 py-2 mb-3 shadow-lg hover-btn">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
+                    </button>
+                </form>
+    
+                <!-- Enlaces de registro y recuperación -->
+                <div class="text-center mt-3 text-dark">
+                    <p>¿No tienes una cuenta? <a href="{% url 'registrarse' %}" class="text-primary large-link"><i class="fas fa-user-plus"></i> Regístrate aquí</a></p>
+                    <p><a href="/recuperar-contraseña/" class="text-primary large-link"><i class="fas fa-key"></i> ¿Olvidaste tu contraseña?</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="container-letters flex justify-center items-center relative">
+        <img class="letters absolute top-[-600px] w-[36%] h-auto mt--10 hidden lg:block" src="{% static 'img/letters.png' %}">
+    </div>
+    
+
+    <br>
+    <br>
+    <br>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

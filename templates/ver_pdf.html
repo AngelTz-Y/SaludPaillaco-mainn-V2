@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+</head>
+<body>
+    <h1>Visualización de Reporte de Asistencia</h1>
+
+    <!-- Contenedor donde se mostrará el PDF -->
+    <canvas id="pdf-render"></canvas>
+
+    <script>
+        // URL del PDF generado
+        var url = "{% url 'generar_pdf'";
+
+        // Cargar el PDF usando pdf.js
+        pdfjsLib.getDocument(url).promise.then(function(pdf) {
+            // Obtener la primera página
+            pdf.getPage(1).then(function(page) {
+                var scale = 1.5;
+                var viewport = page.getViewport({ scale: scale });
+
+                // Preparar el canvas
+                var canvas = document.getElementById('pdf-render');
+                var context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Renderizar la página en el canvas
+                page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de PDF</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    
+    <style>
+        body {
+            background-color: #ecf0f1;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #pdf-container {
+            width: 100%;
+            height: 600px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #3498db;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .toolbar button {
+            background: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .toolbar button:hover {
+            background: #f39c12;
+            color: white;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Visor de PDF</h2>
+
+        <!-- Barra de herramientas -->
+        <div class="toolbar mb-3">
+            <button id="prevPage">⬅️ Anterior</button>
+            <span>Página <span id="pageNum">1</span> de <span id="pageCount">?</span></span>
+            <button id="nextPage">Siguiente ➡️</button>
+            <button id="zoomIn">🔍➕</button>
+            <button id="zoomOut">🔍➖</button>
+        </div>
+
+        <!-- Contenedor del PDF -->
+        <div id="pdf-container">
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+
+    <script>
+        const url = "/generar-pdf/";  // URL del PDF
+
+        let pdfDoc = null,
+            pageNum = 1,
+            pageCount = 0,
+            scale = 1.0,
+            canvas = document.getElementById("pdf-canvas"),
+            ctx = canvas.getContext("2d");
+
+        function renderPage(num) {
+            pdfDoc.getPage(num).then(function(page) {
+                let viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                let renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+
+                document.getElementById("pageNum").textContent = num;
+                document.getElementById("pageCount").textContent = pdfDoc.numPages;
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (num >= 1 && num <= pdfDoc.numPages) {
+                pageNum = num;
+                renderPage(num);
+            }
+        }
+
+        document.getElementById("prevPage").addEventListener("click", function() {
+            queueRenderPage(pageNum - 1);
+        });
+
+        document.getElementById("nextPage").addEventListener("click", function() {
+            queueRenderPage(pageNum + 1);
+        });
+
+        document.getElementById("zoomIn").addEventListener("click", function() {
+            scale += 0.2;
+            renderPage(pageNum);
+        });
+
+        document.getElementById("zoomOut").addEventListener("click", function() {
+            if (scale > 0.4) {
+                scale -= 0.2;
+                renderPage(pageNum);
+            }
+        });
+
+        pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            pageCount = pdfDoc.numPages;
+            renderPage(pageNum);
+        });
+    </script>
+</body>
+</html>

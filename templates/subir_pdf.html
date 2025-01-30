@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir PDF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Subir Archivo PDF</h2>
+
+    <!-- Mensaje de éxito o error -->
+    {% if mensaje %}
+        <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+    {% if mensaje_error %}
+        <div class="alert alert-danger">{{ mensaje_error }}</div>
+    {% endif %}
+
+    <!-- Formulario para cargar los PDFs -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Campo de Año -->
+        <div class="mb-3">
+            <label for="año" class="form-label">Seleccionar Año</label>
+            <select class="form-control" id="año" name="año" required>
+                <option value="" disabled selected>Elige el año</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+            </select>
+        </div>
+
+        <!-- Campo de archivos PDF -->
+        <div class="mb-3">
+            <label for="archivo_pdf" class="form-label">Seleccionar archivo(s) PDF</label>
+            <input type="file" class="form-control" name="archivo_pdf" id="archivo_pdf" multiple required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Subir</button>
+    </form>
+
+    <h3 class="mt-5">Datos Extraídos de los Archivos PDF</h3>
+    {% if extracted_texts %}
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>Archivo</th>
+                    <th>RUT</th>
+                    <th>Mes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for extracted in extracted_texts %}
+                    <tr>
+                        <td>{{ extracted.archivo }}</td>
+                        <td>{{ extracted.data.rut }}</td>
+                        <td>{{ extracted.data.mes }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No se ha extraído ningún dato aún.</p>
+    {% endif %}
+</div>
+
+<!-- Scripts de Bootstrap -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
