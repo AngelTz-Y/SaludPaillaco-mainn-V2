@@ -328,41 +328,18 @@ def cargar_excel(request):
 
 
 
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from .models import Asistencia
 
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from .models import Asistencia
 
+import locale
 from datetime import datetime
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from xhtml2pdf import pisa
-from .models import Asistencia
-
-from django.http import HttpResponse
 from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from datetime import datetime
-from .models import Asistencia
-
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from datetime import datetime
-from .models import Asistencia
-
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from datetime import datetime
-from .models import Asistencia
 
 def generar_pdf(request):
+    # Establecer el idioma en español (español de Chile en este caso)
+    locale.setlocale(locale.LC_TIME, 'es_CL.UTF-8')
+
     # Obtener todos los registros de asistencia
     asistencias = Asistencia.objects.all()
 
@@ -428,6 +405,7 @@ def generar_pdf(request):
 
         # Devolver el PDF generado como respuesta
         return response
+
 
 
 
