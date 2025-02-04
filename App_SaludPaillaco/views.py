@@ -386,7 +386,10 @@ def generar_pdf(request):
         asistencia.dia_semana = dias_semana.get(dia_abreviado, asistencia.fecha.strftime('%a'))
         funcionarios[clave]['asistencias'].append(asistencia)
 
+<<<<<<< HEAD
     # Crear el directorio principal de PDFs
+=======
+>>>>>>> 4b81d2eb5582af8f244fc0c703a73f5a8cdb4c8b
     pdf_dir = os.path.join(settings.MEDIA_ROOT, 'asistencias_pdfs')
     if not os.path.exists(pdf_dir):
         os.makedirs(pdf_dir)
@@ -394,12 +397,15 @@ def generar_pdf(request):
     for clave, datos_funcionario in funcionarios.items():
         rut, mes, ano = clave
         registros = datos_funcionario['asistencias']
+<<<<<<< HEAD
 
         # Asegúrate de que hay registros de asistencia antes de continuar
         if not registros:
             continue
 
         # Eliminar registros duplicados
+=======
+>>>>>>> 4b81d2eb5582af8f244fc0c703a73f5a8cdb4c8b
         registros_unicos = []
         fechas_vistas = set()
         for asistencia in registros:
@@ -407,6 +413,7 @@ def generar_pdf(request):
                 registros_unicos.append(asistencia)
                 fechas_vistas.add(asistencia.fecha)
 
+<<<<<<< HEAD
         # Verificar si el PDF ya fue generado para este funcionario y mes/año
         if AsistenciaPDF.objects.filter(perfil_usuario__rut=rut, mes_asistencia=mes, ano_asistencia=ano).exists():
             continue
@@ -422,6 +429,14 @@ def generar_pdf(request):
         hora_emision = datetime.now().strftime('%H:%M:%S')
 
         # Generar el contenido HTML del PDF
+=======
+        if AsistenciaPDF.objects.filter(perfil_usuario__rut=rut, mes_asistencia=mes, ano_asistencia=ano).exists():
+            continue
+
+        # Ahora se genera la hora exacta en base al momento de la solicitud
+        hora_emision = datetime.now().strftime('%H:%M:%S')
+
+>>>>>>> 4b81d2eb5582af8f244fc0c703a73f5a8cdb4c8b
         html_content = render_to_string('generar_pdf.html', {
             'asistencias': registros_unicos,
             'fecha_actual': fecha_actual,
@@ -433,6 +448,7 @@ def generar_pdf(request):
             'departamento_funcionario': datos_funcionario['departamento'],
         })
 
+<<<<<<< HEAD
         # Crear directorio para mes y año dentro de la carpeta 'asistencias_pdfs'
         mes_ano_dir = os.path.join(pdf_dir, str(mes), str(ano))
         if not os.path.exists(mes_ano_dir):
@@ -548,6 +564,89 @@ def ver_pdff(request):
     return response
 
 
+=======
+        pdf_filename = f'asistencia_{rut}_{mes}_{ano}.pdf'
+        pdf_path = os.path.join(pdf_dir, pdf_filename)
+
+        with open(pdf_path, 'wb') as pdf_file:
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
+            try:
+                perfil_usuario = PerfilUsuario.objects.get(rut=rut)
+                AsistenciaPDF.objects.create(
+                    perfil_usuario=perfil_usuario,
+                    archivo_pdf=os.path.join('asistencias_pdfs', pdf_filename),
+                    mes_asistencia=mes,
+                    ano_asistencia=ano
+                )
+            except PerfilUsuario.DoesNotExist:
+                pass
+    
+    return HttpResponse("PDFs generados y asociados correctamente, si corresponde.")
+
+
+
+
+from django.http import FileResponse
+from django.shortcuts import render
+from .models import AsistenciaPDF
+
+from django.shortcuts import render
+from django.http import FileResponse
+from App_SaludPaillaco.models import AsistenciaPDF
+
+
+from django.shortcuts import render
+from django.http import FileResponse
+from django.contrib.auth.decorators import login_required
+from App_SaludPaillaco.models import AsistenciaPDF
+
+@login_required
+def ver_pdff(request):
+    # Verificar si el usuario tiene un perfil asociado
+    perfil_usuario = getattr(request.user, 'perfilusuario', None)
+    if not perfil_usuario:
+        return render(request, 'ver_pdff.html', {
+            'error': "No se ha encontrado un perfil de usuario asociado."
+        })
+
+    # Obtener los parámetros de mes y año desde la URL (GET)
+    mes = request.GET.get('mes', '').strip().lower()  # Convertimos a minúsculas
+    ano = request.GET.get('ano', '').strip()
+
+    # Validar que los parámetros sean correctos
+    if not mes or not ano.isdigit():
+        return render(request, 'ver_pdff.html', {
+            'error': "Debe proporcionar un mes y un año válidos."
+        })
+
+    ano = int(ano)  # Convertimos el año a entero
+
+    # Buscar el PDF más reciente si hay más de uno
+    asistencia_pdf = AsistenciaPDF.objects.filter(
+        perfil_usuario=perfil_usuario,
+        mes_asistencia=mes,
+        ano_asistencia=ano  # Se corrigió aquí el campo
+    ).order_by('-id').first()  # Obtiene el último PDF generado
+
+    # Si no se encontró un PDF, mostrar mensaje de error
+    if not asistencia_pdf:
+        return render(request, 'ver_pdff.html', {
+            'mes': mes,
+            'ano': ano,
+            'perfil_usuario': perfil_usuario,
+            'error': "No se ha encontrado un PDF para este mes y año."
+        })
+
+    # Obtener la ruta del archivo PDF
+    archivo_pdf = asistencia_pdf.archivo_pdf.path
+
+    # Devolver el archivo PDF como respuesta de descarga
+    response = FileResponse(open(archivo_pdf, 'rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{asistencia_pdf.archivo_pdf.name.split("/")[-1]}"'
+
+    return response
+
+>>>>>>> 4b81d2eb5582af8f244fc0c703a73f5a8cdb4c8b
 
 
 
