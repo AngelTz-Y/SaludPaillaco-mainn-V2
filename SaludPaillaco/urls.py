@@ -14,6 +14,10 @@ urlpatterns = [
     path('Panel_Administrador/', panel_administrador, name='panel_administrador'),
     path('cargar_excel/', cargar_excel, name='cargar_excel'),
     path('generar_pdf/', generar_pdf, name='generar_pdf'),
+    path('panel_usuario_registrado/', panel_UsuarioRegistrado, name='usuario_registrado'),
+    path('panel_usuario_no_registrado/', panel_UsuarioNoRegistrado, name='usuario_no_registrado'),
+    path('ver_pdf/', ver_pdff, name='ver_pdf'),
+
 
 
 

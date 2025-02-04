@@ -19,12 +19,13 @@ class PerfilUsuario(models.Model):
         return self.user.username
 
 
-class RegistroPdfAsistencia(models.Model):
-    perfil_usuario = models.ForeignKey(PerfilUsuario, on_delete=models.CASCADE, related_name='registros_pdf')
-    archivo_pdf = models.FileField(upload_to='registros_pdfs/')
+
+class AsistenciaPDF(models.Model):
+    perfil_usuario = models.ForeignKey(PerfilUsuario, on_delete=models.CASCADE, related_name='asistencias_pdfs')
+    archivo_pdf = models.FileField(upload_to='asistencias_pdfs/')
     fecha_subida = models.DateTimeField(auto_now_add=True)
-    mes_asistencia = models.CharField(max_length=20, null=True, blank=True)  # Mes de la asistencia
-    año_asistencia = models.IntegerField(null=True, blank=True)  # Año de la asistencia
+    mes_asistencia = models.CharField(max_length=20, null=True, blank=True)
+    ano_asistencia = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"PDF de {self.perfil_usuario.rut} - {self.fecha_subida}"
