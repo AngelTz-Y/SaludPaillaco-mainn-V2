@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 # Excepciones y validaciones
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.views.decorators.csrf import csrf_protect
 
 # Configuración de ajustes de Django
 from django.conf import settings
@@ -59,7 +60,7 @@ from io import BytesIO  # Manejo de datos binarios en memoria (necesario para PD
 
 
 
-# Create your views here.
+@csrf_protect
 def inicio(request):
     if request.method == 'POST':
         # Procesar el formulario de inicio de sesión
@@ -96,7 +97,7 @@ def inicio(request):
                 
                 # Verificar si el usuario pertenece al grupo "usuario registrado"
                 if user.groups.filter(name='usuario registrado').exists():
-                    return render(request, 'Grupos/Usuarios/usuario_registrado.html')
+                    return redirect('usuario_registrado')
                 
                 # Si no pertenece a ningún grupo, redirigir con un mensaje de error
                 return render(request, 'inicio.html', {'error': 'No tiene permisos para acceder a esta sección.'})
@@ -228,8 +229,17 @@ def aceptacion_usuario(request):
 
 
 
+@csrf_protect
 def panel_administrador(request):
     return render(request, 'Grupos/Administrador/panel_administrador.html')
+
+@csrf_protect
+def panel_UsuarioRegistrado(request):
+    return render(request, 'Grupos/Usuarios/usuario_registrado.html')
+
+@csrf_protect
+def panel_UsuarioNoRegistrado(request):
+    return render(request, 'Grupos/Usuarios/usuario_no_registrado.html')
 
 
 import openpyxl
@@ -281,7 +291,6 @@ def cargar_excel(request):
                     print(f"Fila {index}: El RUT está vacío, asociando los datos al AC {ac}.")
                     # Si no hay RUT, pero sí hay AC, buscamos el registro con el AC
                     if ac:
-                        # Aquí puedes decidir cómo asociar el AC a un registro existente o crear uno nuevo
                         asistencia = Asistencia(
                             ac=ac,  # Asociar el valor de AC si el RUT no existe
                             rut=None,  # Si no hay RUT, dejamos este campo en blanco o como None
@@ -320,6 +329,10 @@ def cargar_excel(request):
             Asistencia.objects.bulk_create(asistencia_list)
             print(f"{len(asistencia_list)} registros guardados correctamente.")
         
+        # Generar el PDF para cada funcionario después de guardar los registros
+        for asistencia in asistencia_list:
+            generar_pdf(asistencia.rut)
+
         return render(request, 'cargar_excel.html', {'form': ExcelUploadForm(), 'asistencias': asistencia_list})
 
     # Si el método no es POST o no se cargó el archivo
@@ -337,51 +350,48 @@ from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from .models import Asistencia
 
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.timezone import now
+from xhtml2pdf import pisa
+import os
+from datetime import datetime
+
+from datetime import datetime
+
+from datetime import datetime
+
 def generar_pdf(request):
-    # Forzar el idioma español (puede que algunos sistemas no lo soporten bien)
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-    except locale.Error:
-        pass  # Si falla, ignoramos el error
-
-    # Obtener todos los registros de asistencia
     asistencias = Asistencia.objects.all()
-
-    # Obtener la fecha y hora actual
     fecha_actual = datetime.now().strftime('%d/%m/%Y')
-    hora_emision = datetime.now().strftime('%H:%M:%S')
 
-    # Diccionario de días de la semana sin tildes
-    dias_semana = {
-        'mon': 'Lun', 'tue': 'Mar', 'wed': 'Mie',
-        'thu': 'Jue', 'fri': 'Vie', 'sat': 'Sab', 'sun': 'Dom'
-    }
-
-    # Agrupar las asistencias por funcionario
+    dias_semana = {'mon': 'Lun', 'tue': 'Mar', 'wed': 'Mie', 'thu': 'Jue', 'fri': 'Vie', 'sat': 'Sab', 'sun': 'Dom'}
     funcionarios = {}
 
     for asistencia in asistencias:
-        if asistencia.rut not in funcionarios:
-            funcionarios[asistencia.rut] = {
+        clave = (asistencia.rut, asistencia.mes, asistencia.ano)
+        if clave not in funcionarios:
+            funcionarios[clave] = {
                 'nombre': asistencia.nombre,
                 'rut': asistencia.rut,
                 'departamento': asistencia.dpto,
+                'mes': asistencia.mes,
+                'ano': asistencia.ano,
                 'asistencias': []
             }
-
-        # Normalizar el día de la semana a minúsculas y quitar el punto si existe
         dia_abreviado = asistencia.fecha.strftime('%a').lower().replace('.', '')
+        asistencia.dia_semana = dias_semana.get(dia_abreviado, asistencia.fecha.strftime('%a'))
+        funcionarios[clave]['asistencias'].append(asistencia)
 
-        # Asignar el día en español sin tildes
-        asistencia.dia_semana = dias_semana.get(dia_abreviado, asistencia.fecha.strftime('%a'))  # Si no encuentra, usa el original
+    pdf_dir = os.path.join(settings.MEDIA_ROOT, 'asistencias_pdfs')
+    if not os.path.exists(pdf_dir):
+        os.makedirs(pdf_dir)
 
-        funcionarios[asistencia.rut]['asistencias'].append(asistencia)
-
-    # Generar PDFs individuales para cada funcionario
-    for rut, datos_funcionario in funcionarios.items():
+    for clave, datos_funcionario in funcionarios.items():
+        rut, mes, ano = clave
         registros = datos_funcionario['asistencias']
-        
-        # Filtrar registros duplicados por fecha
         registros_unicos = []
         fechas_vistas = set()
         for asistencia in registros:
@@ -389,18 +399,16 @@ def generar_pdf(request):
                 registros_unicos.append(asistencia)
                 fechas_vistas.add(asistencia.fecha)
 
-        # Obtener el mes y año de los registros del funcionario
-        if registros_unicos:
-            mes = registros_unicos[0].mes
-            ano = registros_unicos[0].ano
-        else:
-            mes = ano = None
+        if AsistenciaPDF.objects.filter(perfil_usuario__rut=rut, mes_asistencia=mes, ano_asistencia=ano).exists():
+            continue
 
-        # Renderizar el HTML con los datos
+        # Ahora se genera la hora exacta en base al momento de la solicitud
+        hora_emision = datetime.now().strftime('%H:%M:%S')
+
         html_content = render_to_string('generar_pdf.html', {
             'asistencias': registros_unicos,
             'fecha_actual': fecha_actual,
-            'hora_emision': hora_emision,
+            'hora_emision': hora_emision,  # Genera la hora actual en cada solicitud
             'mes': mes,
             'ano': ano,
             'nombre_funcionario': datos_funcionario['nombre'],
@@ -408,17 +416,87 @@ def generar_pdf(request):
             'departamento_funcionario': datos_funcionario['departamento'],
         })
 
-        # Crear la respuesta HTTP con el PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="asistencia_{rut}.pdf"'
+        pdf_filename = f'asistencia_{rut}_{mes}_{ano}.pdf'
+        pdf_path = os.path.join(pdf_dir, pdf_filename)
 
-        # Convertir HTML a PDF
-        pisa_status = pisa.CreatePDF(html_content, dest=response)
+        with open(pdf_path, 'wb') as pdf_file:
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
+            try:
+                perfil_usuario = PerfilUsuario.objects.get(rut=rut)
+                AsistenciaPDF.objects.create(
+                    perfil_usuario=perfil_usuario,
+                    archivo_pdf=os.path.join('asistencias_pdfs', pdf_filename),
+                    mes_asistencia=mes,
+                    ano_asistencia=ano
+                )
+            except PerfilUsuario.DoesNotExist:
+                pass
+    
+    return HttpResponse("PDFs generados y asociados correctamente, si corresponde.")
 
-        if pisa_status.err:
-            return HttpResponse('Error al generar el PDF', status=500)
 
-        return response
+
+
+from django.http import FileResponse
+from django.shortcuts import render
+from .models import AsistenciaPDF
+
+from django.shortcuts import render
+from django.http import FileResponse
+from App_SaludPaillaco.models import AsistenciaPDF
+
+
+from django.shortcuts import render
+from django.http import FileResponse
+from django.contrib.auth.decorators import login_required
+from App_SaludPaillaco.models import AsistenciaPDF
+
+@login_required
+def ver_pdff(request):
+    # Verificar si el usuario tiene un perfil asociado
+    perfil_usuario = getattr(request.user, 'perfilusuario', None)
+    if not perfil_usuario:
+        return render(request, 'ver_pdff.html', {
+            'error': "No se ha encontrado un perfil de usuario asociado."
+        })
+
+    # Obtener los parámetros de mes y año desde la URL (GET)
+    mes = request.GET.get('mes', '').strip().lower()  # Convertimos a minúsculas
+    ano = request.GET.get('ano', '').strip()
+
+    # Validar que los parámetros sean correctos
+    if not mes or not ano.isdigit():
+        return render(request, 'ver_pdff.html', {
+            'error': "Debe proporcionar un mes y un año válidos."
+        })
+
+    ano = int(ano)  # Convertimos el año a entero
+
+    # Buscar el PDF más reciente si hay más de uno
+    asistencia_pdf = AsistenciaPDF.objects.filter(
+        perfil_usuario=perfil_usuario,
+        mes_asistencia=mes,
+        ano_asistencia=ano  # Se corrigió aquí el campo
+    ).order_by('-id').first()  # Obtiene el último PDF generado
+
+    # Si no se encontró un PDF, mostrar mensaje de error
+    if not asistencia_pdf:
+        return render(request, 'ver_pdff.html', {
+            'mes': mes,
+            'ano': ano,
+            'perfil_usuario': perfil_usuario,
+            'error': "No se ha encontrado un PDF para este mes y año."
+        })
+
+    # Obtener la ruta del archivo PDF
+    archivo_pdf = asistencia_pdf.archivo_pdf.path
+
+    # Devolver el archivo PDF como respuesta de descarga
+    response = FileResponse(open(archivo_pdf, 'rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{asistencia_pdf.archivo_pdf.name.split("/")[-1]}"'
+
+    return response
+
 
 
 

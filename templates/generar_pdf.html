@@ -80,7 +80,8 @@
         <div class="derecha">
             <p style="font-size: 10px;"><strong>Generado Por Intranet: SaludPaillaco</strong></p>
             <p style="font-size: 11px;"><strong>Fecha de Emisión:</strong> {{ fecha_actual }}</p>
-            <p style="font-size: 10px;"><strong>Hora de Emisión:</strong> {{ hora_emision }}</p>
+            <p style="font-size: 10px;"><strong>Hora de Emisión:</strong> <span id="hora-emision">{{ hora_emision }}</span></p>
+
         </div>
     </div>
 
@@ -155,5 +156,23 @@
         <p style="font-size: 8px;"><strong>PERSONAL Y REMUNERACIONES DESAM</strong></p>
         <p style="font-size: 7px;"><strong>INFORMATICA DESAM</strong></p>
     </div>
+
+
+    <script type="text/javascript">
+        // Función para actualizar la hora
+        function actualizarHora() {
+            var ahora = new Date();
+            var horas = ahora.getHours().toString().padStart(2, '0');
+            var minutos = ahora.getMinutes().toString().padStart(2, '0');
+            var segundos = ahora.getSeconds().toString().padStart(2, '0');
+            var hora_emision = horas + ":" + minutos + ":" + segundos;
+    
+            // Actualizar el contenido de la hora en la página
+            document.getElementById('hora-emision').innerHTML = hora_emision;
+        }
+    
+        // Actualizar la hora cada segundo
+        setInterval(actualizarHora, 1000);
+    </script>
 </body>
 </html>
