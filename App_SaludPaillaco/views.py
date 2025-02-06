@@ -168,12 +168,22 @@ def registrarse(request):
             user.delete()  # Eliminar usuario si el perfil no se pudo crear
             return render(request, 'registrarse.html', {'error': f'Error al crear el perfil: {e}'})
 
+        # Verificar si hay PDFs temporales asociados al RUT
+        asistencia_pdfs_temporales = AsistenciaPDF.objects.filter(rut_usuario=rut)
+
+        # Si existen PDFs, asociarlos al perfil del usuario
+        for pdf in asistencia_pdfs_temporales:
+            pdf.perfil_usuario = perfil  # Asocia el PDF al perfil de usuario
+            pdf.rut_usuario = None  # Limpia el campo temporal de rut_usuario
+            pdf.save()
+
         # Mostrar el número de espera al usuario (opcional: redirigir con mensaje)
         return render(request, 'registro_exitoso.html', {'numero_espera': numero_espera})
 
     else:
         profesiones = Profesion_Oficio.objects.all()
         return render(request, 'registrarse.html', {'profesiones': profesiones})
+
 
 
         
@@ -414,9 +424,12 @@ def generar_pdf(request):
         # Verificar si el perfil de usuario existe
         try:
             perfil_usuario = PerfilUsuario.objects.get(rut=rut)
+            # Si el perfil existe, asociamos el PDF directamente con él
+            asociar_con_perfil = True
         except PerfilUsuario.DoesNotExist:
-            # Si no se encuentra el perfil, se salta la generación de PDF para este rut
-            continue
+            # Si no se encuentra el perfil, se asocia el PDF con el campo temporal rut_usuario
+            perfil_usuario = None
+            asociar_con_perfil = False
 
         # Ahora se genera la hora exacta en base al momento de la solicitud
         hora_emision = datetime.now().strftime('%H:%M:%S')
@@ -446,15 +459,25 @@ def generar_pdf(request):
         with open(pdf_path, 'wb') as pdf_file:
             pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
 
-        # Asociar el PDF generado con el perfil de usuario
-        AsistenciaPDF.objects.create(
-            perfil_usuario=perfil_usuario,
-            archivo_pdf=os.path.join('asistencias_pdfs', str(mes), str(ano), pdf_filename),
-            mes_asistencia=mes,
-            ano_asistencia=ano
-        )
-    
+        # Asociar el PDF generado con el perfil de usuario o temporal
+        if asociar_con_perfil:
+            AsistenciaPDF.objects.create(
+                perfil_usuario=perfil_usuario,
+                archivo_pdf=os.path.join('asistencias_pdfs', str(mes), str(ano), pdf_filename),
+                mes_asistencia=mes,
+                ano_asistencia=ano
+            )
+        else:
+            # Si no hay perfil, asociar el PDF con el rut temporal (usuarios no registrados)
+            AsistenciaPDF.objects.create(
+                rut_usuario=rut,
+                archivo_pdf=os.path.join('asistencias_pdfs', str(mes), str(ano), pdf_filename),
+                mes_asistencia=mes,
+                ano_asistencia=ano
+            )
+
     return HttpResponse("PDFs generados y asociados correctamente, si corresponde.")
+
 
 
 
