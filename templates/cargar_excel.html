@@ -1,5 +1,187 @@
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Subir archivo Excel</button>
-</form>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir archivo Excel</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f4f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-header {
+            background: linear-gradient(45deg, #28a745, #218838);
+            color: white;
+            font-size: 1.5rem;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #28a745;
+            padding: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upload-area:hover {
+            background-color: #d4edda;
+            transform: scale(1.05);
+        }
+        .floating-file {
+            font-size: 80px;
+            color: #28a745;
+            animation: float 2s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .btn-upload {
+            background: linear-gradient(45deg, #28a745, #218838);
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 25px;
+            border-radius: 30px;
+            transition: 0.3s;
+            animation: bounce 1.5s infinite;
+        }
+        .btn-upload:hover {
+            background: linear-gradient(45deg, #218838, #1e7e34);
+            transform: scale(1.1);
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .loader {
+            width: 60%;
+            height: 10px;
+            border-radius: 2px;
+            background-color: rgba(0, 0, 0, 0.2);
+            position: relative;
+            margin-top: 30px;
+        }
+
+        .loader::before {
+            content: "";
+            position: absolute;
+            background-color: rgb(9, 188, 9);
+            width: 0%;
+            height: 100%;
+            border-radius: 2px;
+            animation: load 3.5s ease-in-out forwards;
+            box-shadow: rgb(9, 188, 9) 0px 2px 29px 0px;
+        }
+
+        @keyframes load {
+            0% {
+                width: 0%;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-file-excel"></i> Subir archivo Excel
+        </div>
+        <div class="card-body">
+            <div class="floating-file"><i class="fas fa-file-excel"></i></div>
+            <p class="text-muted">Arrastra o selecciona tu archivo .xlsx/.xls</p>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="file-input" name="excel_file" accept=".xlsx, .xls" hidden />
+                        <p id="file-name" class="text-muted">Ningún archivo seleccionado</p>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-upload"><i class="fas fa-upload"></i> Subir archivo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loader debajo del container -->
+    <div class="loader"></div>
+</div>
+
+<script>
+
+    
+
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const fileNameDisplay = document.getElementById('file-name');
+
+    
+    
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    window.onload = function() {
+        // Seleccionar el elemento con la clase 'loader' y ocultarlo
+        var loader = document.querySelector('.loader');
+        if (loader) {
+            loader.style.display = 'none';
+        }
+    };
+    
+    uploadArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        uploadArea.style.backgroundColor = "#d4edda";
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.backgroundColor = "white";
+    });
+    
+    uploadArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        uploadArea.style.backgroundColor = "white";
+        
+        if (event.dataTransfer.files.length) {
+            fileInput.files = event.dataTransfer.files;
+            fileNameDisplay.textContent = fileInput.files[0].name;
+        }
+    });
+    
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            fileNameDisplay.textContent = fileInput.files[0].name;
+        }
+    });
+</script>
+</body>
+</html>  
+
+
+
